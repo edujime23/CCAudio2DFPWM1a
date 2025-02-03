@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MP3 to DFPWM Converter</title>
+</head>
+<body>
+    <h1>MP3 to DFPWM Converter</h1>
+    <input type="file" id="fileInput" accept="audio/mpeg">
+    <button onclick="convertFile()">Convert</button>
+    <a id="downloadLink" style="display: none;">Download DFPWM</a>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(() => {
+                console.log("Service Worker Registered");
+            });
+        }
+
+        async function convertFile() {
+            const fileInput = document.getElementById("fileInput");
+            if (!fileInput.files.length) {
+                alert("Please select an MP3 file.");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const response = await fetch("/convert", {
+                method: "POST",
+                body: formData
+            });
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+
+            const downloadLink = document.getElementById("downloadLink");
+            downloadLink.href = url;
+            downloadLink.download = "converted.dfpwm";
+            downloadLink.style.display = "block";
+            downloadLink.textContent = "Download DFPWM";
+        }
+    </script>
+</body>
+</html>
