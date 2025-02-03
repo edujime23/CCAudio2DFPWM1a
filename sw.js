@@ -45,12 +45,29 @@ self.addEventListener("fetch", async (event) => {
 
 async function handleConversion(request) {
     const formData = await request.formData();
-    const file = formData.get("file");
-    if (!file) {
-        return new Response(JSON.stringify({ error: "No file uploaded" }), { status: 400, headers: { "Content-Type": "application/json" } });
+    
+    let file = formData.get("file");
+    let fileUrl = formData.get("url");
+
+    if (!file && !fileUrl) {
+        return new Response(JSON.stringify({ error: "No file or URL provided" }), { status: 400, headers: { "Content-Type": "application/json" } });
     }
 
-    const arrayBuffer = await file.arrayBuffer();
+    let arrayBuffer;
+    
+    if (fileUrl) {
+        try {
+            console.log("Fetching audio from URL:", fileUrl);
+            const response = await fetch(fileUrl);
+            if (!response.ok) throw new Error("Failed to fetch audio file");
+            arrayBuffer = await response.arrayBuffer();
+        } catch (error) {
+            return new Response(JSON.stringify({ error: "Failed to fetch file", details: error.message }), { status: 400, headers: { "Content-Type": "application/json" } });
+        }
+    } else {
+        arrayBuffer = await file.arrayBuffer();
+    }
+
     const audioContext = new AudioContext({ sampleRate: SAMPLE_RATE });
     const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
